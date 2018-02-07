@@ -15,12 +15,10 @@ class Packet:
         self.packet_type = packet_type
 
     def display_packet_info(self):
-        print("{0:15s} {1:17s} {2:3d} {3:3d} {4:12s} {5:15s} {6:17s} {7:5s} {8:15s}".format(self.sender_ip_address,
-              self.sender_mac_address, self.packet_seq_number, self.number_of_packets,
-              self.payload, self.receiver_ip_address, self.receiver_mac_address, self.certificate, self.packet_type))
+        print("{0:15s} {1:17s} {2:3d} {3:3d}".format(self.sender_ip_address,
+              self.sender_mac_address, self.packet_seq_number, self.number_of_packets), end=" ")
+        print(self.payload["file_size"], self.payload["file_name"], self.payload["content"])
 
-    def __del__(self):
-        print("Packet " + str(self.packet_seq_number) + " destroyed")
 
-## write a modular program which transfers or makes communication across heterogeneuos networks
-## use the out of problem number 4
+# write a modular program which transfers or makes communication across heterogeneuos networks
+# use the out of problem number 4
