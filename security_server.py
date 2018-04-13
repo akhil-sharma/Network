@@ -1,49 +1,31 @@
-from definitions import ROOT_DIR
-import os
+from definitions import SECURITY_SERVER
 import utility as util
 import socket
 import threading
-from struct import *
-from packet import Packet, retrieve_packet_members
-
-
-def recv_msg(sock):
-    # Read message length and unpack it into an integer
-    raw_msg_len = recv_all(sock, 4)
-    if not raw_msg_len:
-        return None
-    msg_len = unpack('>I', raw_msg_len)[0]
-    # Read the message data
-    return recv_all(sock, msg_len)
-
-
-def recv_all(sock, n):
-    # Helper function to recv n bytes or return None if EOF is hit
-    data = b''
-    while len(data) < n:
-        packet = sock.recv(n - len(data))
-        if not packet:
-            return None
-        data += packet
-    return data
+from packet import retrieve_packet_members
+from known_hosts import *
 
 
 class ThreadedSecurityServer:
-    def __init__(self, port, host=None):
+    def __init__(self, port=None, host=None):
         if host is None:
-            self.host = util.get_sender_ip()
+            self.host = SECURITY_SERVER[0] #util.get_self_ip()
         else:
             self.host = host
-        self.port = port
-        self.certificate_list = []
+
+        if port is None:
+            self.port = SECURITY_SERVER[1] #9898
+        else:
+            self.port = port
+
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind((self.host, self.port))
-        self.mac_address = list(util.get_sender_mac())
-        self.destination_directory = os.path.join(ROOT_DIR, "received_files")
+        self.mac_address = util.get_self_mac()
+        self.known_hosts = {}
 
     def listen(self):
-        self.sock.listen(5)
-        print("Listening to packets...")
+        self.sock.listen(10)
+        print("Listening for incoming security requests...")
         while True:
             client, address = self.sock.accept()
             client.settimeout(10)
@@ -51,65 +33,35 @@ class ThreadedSecurityServer:
 
     def listen_to_client(self, client, address):
         # single thread per client
-        message_buffer = {}
-        message = []
-        total_packets = 0
-        file_name = ""
-        file_size = 0
-        output_file_location = ""
+        temp = ""
         print("Listening to client: ", address)
         while True:
-                data = recv_msg(client)
+                data = util.recv_msg(client)  # recognize the purpose of this data
                 if not data:
                     break
                 else:
-                    if len(eval(data).split(" ")) == 4:
-                        request_list = eval(data).split(" ")
-                        username = request_list[0]
-                        password = request_list[1]
-                        ip = request_list[2]
-                        mac = request_list[3]
+                    information = eval(data)
+                    print(type(information))
+                    information_length = len(information)
+
+                    if information_length == 4:
+                        identity = eval(retrieve_host(information).serialize())
+                        for _, v in identity.items():
+                            temp += v
+                        temp = hash(temp)
+                        self.known_hosts[identity["ip_address"]] = temp  # change to mac
+                        util.send_msg(client, str(temp).encode())
 
                     else:
-                        packet = retrieve_packet_members(eval(data))
-                        if total_packets == 0:
-                            total_packets = packet.number_of_packets
-                            print("Total packets: ", total_packets)
-                        sender_ip = packet.sender_ip_address
-                        sender_mac = packet.sender_mac_address
-                        if not file_name:
-                            file_name = packet.payload["file_name"]
-                            print("filename: ", file_name)
-                        if file_size == 0:
-                            file_size = packet.payload["file_size"]
-                        if not output_file_location:
-                            output_file_location = os.path.join(self.destination_directory, file_name)
-                        message_buffer[packet.packet_seq_number] = packet.payload["content"]
+                        answer = "False"
+                        request = eval(data)
+                        if self.known_hosts[request[0]] == int(request[1]):
+                            answer = "True"
+                        util.send_msg(client, answer.encode())
 
-        for i in range(1, total_packets + 1):
-            if message_buffer[i]:
-                message.append(message_buffer[i])
-        output_file = open(output_file_location, "wb")
-        output_file.writelines(message)
-        output_file.close()
-
-        output_file_size = os.path.getsize(output_file_location)
-        print("Expected file size (Bytes)", file_size, sep=" : ")
-        print("Received file size (Bytes)", output_file_size, sep=" : ")
-
-        print("Loss %", (file_size - output_file_size) * 100 / file_size, sep=" : ")
-
-        client.shutdown(socket.SHUT_RDWR)
-        client.close()
+    def print_known_hosts(self):
+        print(self.known_hosts)
 
 
 if __name__ == "__main__":
-    while True:
-        port_num = input("Port number: ")
-        try:
-            port_num = int(port_num)
-            break
-        except ValueError:
-            pass
-    #9898
-    ThreadedSecurityServer(port_num, "127.0.0.1").listen()
+    ThreadedSecurityServer().listen()

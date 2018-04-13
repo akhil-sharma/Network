@@ -3,19 +3,7 @@ import os
 import utility as util
 import socket
 import threading
-from struct import *
 from packet import Packet, retrieve_packet_members
-
-
-def recv_all(sock, n):
-    # Helper function to recv n bytes or return None if EOF is hit
-    data = b''
-    while len(data) < n:
-        packet = sock.recv(n - len(data))
-        if not packet:
-            return None
-        data += packet
-    return data
 
 
 class ThreadedReceiver:
@@ -23,13 +11,13 @@ class ThreadedReceiver:
     def __init__(self, port, host=None):
         self.message = []
         if host is None:
-            self.host = util.get_sender_ip()
+            self.host = util.get_self_ip()
         else:
             self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind((self.host, self.port))
-        self.mac_address = list(util.get_sender_mac())
+        self.mac_address = list(util.get_self_mac())
         self.file_name = ""
         self.file_size = 0
         self.total_packets = 0
@@ -57,7 +45,7 @@ class ThreadedReceiver:
         message = {}
         print("Listening to client: ", address)
         while True:
-                data = self.recv_msg(client)
+                data = util.recv_msg(client)
                 if not data:
                     break
                 else:
@@ -90,15 +78,6 @@ class ThreadedReceiver:
 
         client.shutdown(socket.SHUT_RDWR)
         client.close()
-
-    def recv_msg(self, sock):
-        # Read message length and unpack it into an integer
-        raw_msg_len = recv_all(sock, 4)
-        if not raw_msg_len:
-            return None
-        msg_len = unpack('>I', raw_msg_len)[0]
-        # Read the message data
-        return recv_all(sock, msg_len)
 
     def verify_packet(self, packet):
         pass

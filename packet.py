@@ -1,23 +1,18 @@
-ACK = "acknowledge"
-MES = "message"
-
-
 def retrieve_packet_members(holder):
     return Packet(holder['sender_ip_address'], holder['sender_mac_address'], holder['packet_seq_number'],
-                  holder['number_of_packets'], holder['payload'], holder['packet_type'], holder['receiver_ip_address'],
+                  holder['number_of_packets'], holder['payload'], holder['receiver_ip_address'],
                   holder['certificate'])
 
 
 class Packet:
 
-    def __init__(self, sender_ip_address, sender_mac_address, packet_seq_number, number_of_packets, payload,
-                 packet_type=MES, receiver_ip_address="", certificate=""):
+    def __init__(self, sender_ip_address, sender_mac_address, packet_seq_number, number_of_packets,
+                 payload, receiver_ip_address, certificate,):
         self.sender_ip_address = sender_ip_address
         self.sender_mac_address = sender_mac_address
         self.packet_seq_number = packet_seq_number
         self.number_of_packets = number_of_packets
         self.payload = payload
-        self.packet_type = packet_type
         self.receiver_ip_address = receiver_ip_address
         self.certificate = certificate
 
@@ -30,7 +25,7 @@ class Packet:
     def serialize(self):
         return str({'sender_ip_address': self.sender_ip_address, 'sender_mac_address': self.sender_mac_address,
                     'packet_seq_number': self.packet_seq_number, 'number_of_packets': self.number_of_packets,
-                    'payload': self.payload, 'packet_type': self.packet_type,
+                    'payload': self.payload,
                     'receiver_ip_address': self.receiver_ip_address, 'certificate': self.certificate})
 
 
