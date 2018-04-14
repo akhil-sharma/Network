@@ -2,19 +2,18 @@ from definitions import SECURITY_SERVER
 import utility as util
 import socket
 import threading
-from packet import retrieve_packet_members
 from known_hosts import *
 
 
 class ThreadedSecurityServer:
     def __init__(self, port=None, host=None):
         if host is None:
-            self.host = SECURITY_SERVER[0] #util.get_self_ip()
+            self.host = SECURITY_SERVER[0]  # util.get_self_ip()
         else:
             self.host = host
 
         if port is None:
-            self.port = SECURITY_SERVER[1] #9898
+            self.port = SECURITY_SERVER[1]  # 9898
         else:
             self.port = port
 

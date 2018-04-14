@@ -16,7 +16,7 @@ class ThreadedNode:
             self.host = host
 
         if port is None:
-            self.port = 9999
+            self.port = 9987
         else:
             self.port = port
         self.certificate = ""
@@ -135,6 +135,6 @@ def forward_message(sock, msg):
 
 
 if __name__ == "__main__":
-    node = ThreadedNode(host="192.168.56.2", port=9999)
+    node = ThreadedNode(host="192.168.56.3", port=9987)
     node.get_security_certificate()
     node.listen()
