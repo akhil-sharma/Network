@@ -38,27 +38,25 @@ class ThreadedNode:
         self.routingTable[self.host] = {"cost": 0, "next_hop": self.host}
         for node in LIST_OF_ALL_NODES:
             if node not in self.neighbours and node != self.host:
-                self.routingTable[node] = {"cost": math.inf, "next_hop": self.host}
-
-        self.share_routing_details()
+                self.routingTable[node] = {"cost": 1000, "next_hop": self.host}
 
     def share_routing_details(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         for neighbour in self.neighbours:
             try:
                 sock.connect((neighbour, PRE_DEFINED_PORT))
-                routing_info = Packet(self.host, self.mac_address, 1, 1, self.routingTable,
-                                      neighbour, self.certificate, packet_type="INFORMATION")
-                forward_message(sock, routing_info)
-                print("Routing information shared!")
-            except socket.error as e:
-                print("Bad connection request in share_routing_details()" + neighbour + e)
+            except socket.error:
+                print("Already Connected" + neighbour)
+            routing_info = Packet(self.host, self.mac_address, 1, 1, self.routingTable,
+                                  neighbour, self.certificate, packet_type="INFORMATION")
+            forward_message(sock, routing_info)
+            print("Routing information shared!")
 
     def distance_vector(self, routing_table, sender_ip):
         global routing_table_update_progress
 
         routing_table_update_progress = True
-        for key, val in routing_table.item():
+        for key, val in routing_table.items():
             if key != self.host:
                 if val["cost"] < self.routingTable[key]["cost"] + 1:
                     self.routingTable[key]["cost"] = val["cost"] + 1
@@ -122,6 +120,7 @@ class ThreadedNode:
                             if not file_name:
                                 file_name = packet.payload["file_name"]
                                 print("filename: ", file_name)
+                                packet.display_packet_path()
                             if file_size == 0:
                                 file_size = packet.payload["file_size"]
                             if not output_file_location:
@@ -132,11 +131,13 @@ class ThreadedNode:
                             packet.sender_ip_address = self.host
                             packet.certificate = self.certificate
                             packet.path.append(self.host)
+                            print(packet.path)
                             packet.display_packet_info()
                             try:
-                                comm_sock.connect((packet.receiver_ip_address, PRE_DEFINED_PORT))
-                            except socket.error as e:
-                                print("error:" + e + "(already connected)")
+                                comm_sock.connect((self.routingTable[packet.receiver_ip_address]["next_hop"],
+                                                   PRE_DEFINED_PORT))
+                            except socket.error:
+                                print("error: (already connected)")
                             forward_message(comm_sock, packet)
                     elif packet.packet_type == "INFORMATION":
                         while routing_table_update_progress:
@@ -186,3 +187,6 @@ if __name__ == "__main__":
     node.get_security_certificate()
     threading.Thread(target=node.listen).start()
     node.identify_neighbours()
+    if input("Share Routing details? y/n").upper().startswith("Y"):
+        node.share_routing_details()
+

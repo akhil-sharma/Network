@@ -1,6 +1,6 @@
 import math
 import os
-from definitions import ROOT_DIR, SECURITY_SERVER
+from definitions import ROOT_DIR, SECURITY_SERVER, PRE_DEFINED_PORT
 from packet import Packet
 import utility as util
 import socket
@@ -9,9 +9,9 @@ from known_hosts import KnownHosts
 
 
 def get_receiver_address():
-    receiver_address = input("Enter receiver's address (192.168.178.3, 9987): ")
+    receiver_address = input("Enter receiver's address (192.168.178.2, 9999): ")
     if not receiver_address:
-        return "192.168.56.3", 9987
+        return "192.168.56.2", PRE_DEFINED_PORT
     else:
         address = receiver_address.split(",")
         return address[0], int(address[1])
@@ -84,4 +84,4 @@ if __name__ == "__main__":
     s.get_user_data(receiver_ip_address)
     # # Now, we have a packet list
     #  util.send_object(s.packet_list, receiver_ip_address, receiver_port)
-    util.send_object(s.packet_list, "192.168.56.2", 9999)
+    util.send_object(s.packet_list, "192.168.56.2", PRE_DEFINED_PORT)

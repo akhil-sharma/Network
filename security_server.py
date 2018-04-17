@@ -33,14 +33,14 @@ class ThreadedSecurityServer:
     def listen_to_client(self, client, address):
         # single thread per client
         temp = ""
-        print("Listening to client: ", address)
+        # print("Listening to client: ", client)
         while True:
                 data = util.recv_msg(client)  # recognize the purpose of this data
                 if not data:
                     break
                 else:
                     information = eval(data)
-                    print(type(information))
+                    # print(type(information))
                     information_length = len(information)
 
                     if information_length == 4:
@@ -50,7 +50,7 @@ class ThreadedSecurityServer:
                         temp = hash(temp)
                         self.known_hosts[identity["ip_address"]] = temp  # change to mac
                         util.send_msg(client, str(temp).encode())
-
+                        self.print_known_hosts()
                     else:
                         answer = "False"
                         request = eval(data)

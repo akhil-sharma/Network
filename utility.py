@@ -36,7 +36,7 @@ def recv_all(sock, n):
 def send_msg(sock, msg):
     # Prefix each message with a 4-byte length (network byte order)
     msg = pack('>I', len(msg)) + msg
-    sock.sendall(msg)
+    sock.send(msg)
 
 
 def send_object(packet_list, receiver_ip, port):
