@@ -57,9 +57,10 @@ class ThreadedNode:
         routing_table_update_progress = True
         for key, val in routing_table.items():
             if key != self.host:
-                if val["cost"] < self.routingTable[key]["cost"] + 1:
+                if val["cost"] + 1 < self.routingTable[key]["cost"]:
                     self.routingTable[key]["cost"] = val["cost"] + 1
                     self.routingTable[key]["next_hop"] = sender_ip
+                    self.share_routing_details()
         routing_table_update_progress = False
 
     def get_security_certificate(self):
@@ -142,6 +143,7 @@ class ThreadedNode:
                         while routing_table_update_progress:
                             pass
                         self.distance_vector(packet.payload, packet.sender_ip_address)
+                        print(self.routingTable)
                         print("Updated routing table!")
 
                 else:
